@@ -1,12 +1,13 @@
 import { mkdir } from "node:fs/promises";
 await mkdir(".agent", { recursive: true });
+const quickJS = ["quickjs-emscripten-core", "@jitl/quickjs-wasmfile-release-sync"];
 const build = await Bun.build({
   entrypoints: ["src/server/agent/worker-entry.ts"],
   outdir: ".agent",
   naming: "worker.mjs",
   target: "node",
   packages: "bundle",
-  external: ["quickjs-emscripten"],
+  external: quickJS,
 });
 if (!build.success) {
   for (const log of build.logs) console.error(log);
@@ -21,7 +22,7 @@ const exchange = await Bun.build({
   naming: "exchange-worker.mjs",
   target: "node",
   packages: "bundle",
-  external: ["quickjs-emscripten"],
+  external: quickJS,
 });
 if (!exchange.success) {
   for (const log of exchange.logs) console.error(log);

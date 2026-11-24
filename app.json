@@ -15,7 +15,7 @@
   "runtime": {
     "environment": "node",
     "cwd": "runtime",
-    "command": ["node", "/app/runtime/start.mjs"],
+    "command": ["node", "/app/runtime/packaging/start.mjs"],
     "port": 3000,
     "readiness": { "path": "/api/health" }
   },

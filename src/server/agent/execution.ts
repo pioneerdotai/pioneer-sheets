@@ -1,5 +1,8 @@
 import { retargetUnit } from "../../shared/documents/unit-data";
-import { getQuickJS } from "quickjs-emscripten";
+import releaseSync from "@jitl/quickjs-wasmfile-release-sync";
+import { newQuickJSWASMModuleFromVariant } from "quickjs-emscripten-core";
+
+let quickJS: ReturnType<typeof newQuickJSWASMModuleFromVariant> | undefined;
 
 /**
  * Agent source runs in QuickJS WASM, never node:vm/eval in the host process.
@@ -19,7 +22,7 @@ export async function executeFacade(
 ) {
   if (typeof code !== "string" || code.length > 200000)
     throw new Error("INVALID_CODE");
-  const module = await getQuickJS(),
+  const module = await (quickJS ??= newQuickJSWASMModuleFromVariant(releaseSync)),
     runtime = module.newRuntime();
   runtime.setMemoryLimit(64 * 1024 * 1024);
   runtime.setMaxStackSize(1024 * 1024);

@@ -11,14 +11,15 @@ import { resolve, join, dirname, relative } from "node:path";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileIndex, sha256 } from "./files.mjs";
-const root = process.cwd(),
-  require = createRequire(import.meta.url);
+const root = process.cwd();
 const manifest = JSON.parse(await readFile("app.json", "utf8"));
 const output = resolve("dist", `sheets-${manifest.version}`);
+// Pioneer installs the full runtime.cwd subtree and only declared paths outside it.
+const runtime = join(output, manifest.runtime.cwd);
 await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
+await mkdir(runtime, { recursive: true });
 for (const name of [".output", "public", "drizzle"])
-  await cp(name, join(output, name), {
+  await cp(name, join(runtime, name), {
     recursive: true,
     dereference: true,
     filter: (p) => {
@@ -27,11 +28,11 @@ for (const name of [".output", "public", "drizzle"])
       return !p.includes("/node_modules/") || !p.includes("/.cache/");
     },
   });
-await mkdir(join(output, ".agent"));
+await mkdir(join(runtime, ".agent"));
 for (const name of ["worker.mjs", "exchange-worker.mjs"])
-  await cp(join(".agent", name), join(output, ".agent", name));
-// Bundled workers have only QuickJS as a runtime package external. Copy its
-// declared dependency closure, including actual WASM files; never copy dev deps.
+  await cp(join(".agent", name), join(runtime, ".agent", name));
+// The workers use the synchronous release build of QuickJS. Copy just that
+// build and the declared package dependencies needed to load its WASM.
 const copied = new Set();
 async function dependency(name, from = root) {
   const loader = createRequire(join(from, "package.json"));
@@ -57,7 +58,7 @@ async function dependency(name, from = root) {
     p = JSON.parse(await readFile(file, "utf8"));
   if (copied.has(p.name)) return;
   copied.add(p.name);
-  await cp(directory, join(output, "node_modules", p.name), {
+  await cp(directory, join(runtime, "node_modules", p.name), {
     recursive: true,
     dereference: true,
     filter: (p) => !relative(directory, p).split("/").includes("node_modules"),
@@ -65,15 +66,16 @@ async function dependency(name, from = root) {
   for (const dep of Object.keys(p.dependencies || {}))
     await dependency(dep, directory);
 }
-await dependency("quickjs-emscripten");
-await mkdir(join(output, "runtime"));
-await cp("packaging/start.mjs", join(output, "runtime/start.mjs"));
+await dependency("quickjs-emscripten-core");
+await dependency("@jitl/quickjs-wasmfile-release-sync");
+await mkdir(join(runtime, "packaging"));
+await cp("packaging/start.mjs", join(runtime, "packaging/start.mjs"));
 for (const name of ["assets", "skills"])
   await cp(name, join(output, name), { recursive: true });
 await cp(".mcp.json", join(output, ".mcp.json"));
 await cp("app.json", join(output, "app.json"));
 await writeFile(
-  join(output, "files.json"),
+  join(runtime, "files.json"),
   JSON.stringify(await fileIndex(output), null, 2) + "\n",
 );
 const archive = output + ".tar.gz";
@@ -83,7 +85,7 @@ execFileSync("tar", [
   "-C",
   dirname(output),
   output.split("/").pop(),
-]);
+], { env: { ...process.env, COPYFILE_DISABLE: "1" } });
 const archiveBytes = (await stat(archive)).size,
   files = await fileIndex(output),
   expandedBytes = files.reduce((sum, f) => sum + f.size, 0),
