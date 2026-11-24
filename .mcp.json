@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pioneer-sheets": {
+      "type": "pioneer",
+      "url": "http://pioneer-app-runtime.internal/api/mcp"
+    }
+  }
+}

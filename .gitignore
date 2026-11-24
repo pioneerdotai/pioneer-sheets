@@ -1,0 +1,19 @@
+node_modules/
+.output/
+.nitro/
+.tanstack/
+dist/
+data/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env*
+.DS_Store
+
+.agent/
+
+# Local development state (production uses APP_DATA).
+.sheets-data/
+artifacts/
+/credential.json
+/credentials.json

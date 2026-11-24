@@ -1,0 +1,47 @@
+.editor-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+.editor-host {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: var(--office-surface, #fff);
+}
+.univer-container {
+  position: absolute;
+  inset: 0;
+}
+/* Align the classic ribbon's tabs and tools within the editor host. */
+.editor-host [data-u-comp="ribbon-header-menu"] > [role="tablist"],
+.editor-host [data-u-comp="ribbon-toolbar"] {
+  justify-content: flex-start;
+}
+.presence-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  overflow: hidden;
+}
+.peer-cursor {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  color: var(--office-surface, #fff);
+  border-radius: 4px 4px 4px 0;
+  font-size: 10px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px #0002;
+}
+
+.peer-cursor img {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  object-fit: cover;
+}
